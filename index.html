@@ -34,7 +34,7 @@
             border: 2px solid #e0f8cf;
         }
 
-        /* Animation Polyfills for tailwindcss-animate classes */
+        /* Animation Polyfills */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -45,6 +45,10 @@
         }
         @keyframes bouncePixel {
             0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-2px); }
         }
 
@@ -52,9 +56,10 @@
         .fade-in { animation-name: fadeIn; }
         .slide-in-from-bottom-10 { animation-name: slideInBottom; }
         .animate-bounce-pixel { animation: bouncePixel 1s infinite steps(2); }
+        .animate-float { animation: float 2s infinite ease-in-out; }
         
         body {
-            background-color: #292524; /* Stone-800 fallback */
+            background-color: #292524;
         }
         
         /* Ensure crisp pixel edges */
@@ -69,165 +74,264 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- ICONS (Replacing lucide-react import) ---
+        // --- ICONS ---
         const IconWrapper = ({ size = 24, color = "currentColor", children, ...props }) => (
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width={size} 
-                height={size} 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke={color} 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                {...props}
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
                 {children}
             </svg>
         );
 
         const MapIcon = (props) => (
-            <IconWrapper {...props}>
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                <line x1="8" y1="2" x2="8" y2="18"></line>
-                <line x1="16" y1="6" x2="16" y2="22"></line>
-            </IconWrapper>
+            <IconWrapper {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></IconWrapper>
         );
-
         const BookOpen = (props) => (
-            <IconWrapper {...props}>
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </IconWrapper>
+            <IconWrapper {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></IconWrapper>
         );
-
         const DollarSign = (props) => (
-            <IconWrapper {...props}>
-                <line x1="12" y1="1" x2="12" y2="23"></line>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </IconWrapper>
+            <IconWrapper {...props}><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></IconWrapper>
         );
-
         const XIcon = (props) => (
-            <IconWrapper {...props}>
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </IconWrapper>
+            <IconWrapper {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></IconWrapper>
         );
-
         const ChevronRight = (props) => (
-            <IconWrapper {...props}>
-                <polyline points="9 18 15 12 9 6"></polyline>
-            </IconWrapper>
+            <IconWrapper {...props}><polyline points="9 18 15 12 9 6"></polyline></IconWrapper>
         );
-
         const MapPin = (props) => (
-            <IconWrapper {...props}>
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-            </IconWrapper>
+            <IconWrapper {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></IconWrapper>
         );
-
         const ExternalLink = (props) => (
-            <IconWrapper {...props}>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-            </IconWrapper>
+            <IconWrapper {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></IconWrapper>
         );
 
-        // --- VISUAL ASSETS ---
+        // --- ASSETS & DATA ---
 
-        // The "Gameboy" Palette
         const COLORS = {
-            bg: '#e0f8cf',       // Lightest Green (Background)
-            ui: '#86c06c',       // Light Green (UI Elements)
-            accent: '#306850',   // Dark Green (Text/Borders)
-            dark: '#071821',     // Almost Black (Headers)
+            bg: '#e0f8cf',
+            ui: '#86c06c',
+            accent: '#306850',
+            dark: '#071821',
         };
 
-        // Helper: Generate Google Maps Search Link
+        const QUOTES = {
+            spencer: "I'm moody, but I love the gym. Did I mention I'm moody.",
+            clarke: "I love anything FREE, my favourite saying is \"How much did that set you back\""
+        };
+
         const getMapLink = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
-        // --- CUSTOM PIXEL ART TRAINERS ---
-        const TrainerSprite = ({ type = 'spencer' }) => {
+        // --- COMPONENTS ---
+
+        // Pixel Art Trainer with Interaction
+        const TrainerSprite = ({ type = 'spencer', onClick }) => {
             const isSpencer = type === 'spencer';
             
-            // Custom Palettes based on provided photos
             const palette = {
                 skin: '#F5D0A9',
                 eye: '#111827',
-                // Spencer: Red shirt, Dark Brown Hair
-                // Clarke: Navy shirt, Blonde/Light Brown Hair
                 hair: isSpencer ? '#4A3728' : '#CCA352', 
                 shirt: isSpencer ? '#DC2626' : '#172554',
-                pants: isSpencer ? '#374151' : '#A8A29E', // Grey jeans vs Khakis
+                pants: isSpencer ? '#374151' : '#A8A29E',
                 shoes: '#1F2937'
             };
 
-            // Scaling factor for the pixels
-            const pixelSize = '4px';
-
             return (
-                <div className="relative inline-block mx-2 animate-bounce-pixel" style={{ width: '40px', height: '48px' }}>
+                <div 
+                    className="relative group cursor-pointer" 
+                    onClick={(e) => {
+                        e.stopPropagation(); // Critical: Stops the click passing to the background
+                        onClick(type);
+                    }}
+                >
                     
-                    {/* --- HEAD --- */}
-                    
-                    {/* Face Base */}
-                    <div className="absolute left-[8px] top-[8px] w-[24px] h-[20px]" style={{backgroundColor: palette.skin}}></div>
-                    
-                    {/* Hair (Distinct Styles) */}
-                    {isSpencer ? (
-                        <>
-                            {/* Spencer: Textured/Bangs */}
-                            <div className="absolute left-[4px] top-[4px] w-[32px] h-[8px]" style={{backgroundColor: palette.hair}}></div>
-                            <div className="absolute left-[8px] top-[12px] w-[8px] h-[4px]" style={{backgroundColor: palette.hair}}></div>
-                        </>
-                    ) : (
-                        <>
-                            {/* Clarke: Spiky/Upwards */}
-                            <div className="absolute left-[4px] top-[0px] w-[32px] h-[12px]" style={{backgroundColor: palette.hair}}></div>
-                            <div className="absolute left-[12px] top-[-4px] w-[16px] h-[4px]" style={{backgroundColor: palette.hair}}></div>
-                        </>
-                    )}
-
-                    {/* Eyes */}
-                    <div className="absolute left-[12px] top-[16px] w-[4px] h-[4px]" style={{backgroundColor: palette.eye}}></div>
-                    <div className="absolute left-[24px] top-[16px] w-[4px] h-[4px]" style={{backgroundColor: palette.eye}}></div>
-
-                    {/* --- BODY --- */}
-                    
-                    {/* Shirt */}
-                    <div className="absolute left-[8px] top-[28px] w-[24px] h-[12px]" style={{backgroundColor: palette.shirt}}></div>
-                    
-                    {/* Sleeves */}
-                    <div className="absolute left-[4px] top-[28px] w-[4px] h-[8px]" style={{backgroundColor: palette.shirt}}></div>
-                    <div className="absolute left-[32px] top-[28px] w-[4px] h-[8px]" style={{backgroundColor: palette.shirt}}></div>
-
-                    {/* Hands */}
-                    <div className="absolute left-[4px] top-[36px] w-[4px] h-[4px]" style={{backgroundColor: palette.skin}}></div>
-                    <div className="absolute left-[32px] top-[36px] w-[4px] h-[4px]" style={{backgroundColor: palette.skin}}></div>
-
-                    {/* Backpack Straps (Subtle yellow) */}
-                    <div className="absolute left-[12px] top-[28px] w-[4px] h-[12px] bg-yellow-600 opacity-40"></div>
-                    <div className="absolute left-[24px] top-[28px] w-[4px] h-[12px] bg-yellow-600 opacity-40"></div>
-
-                    {/* --- LEGS --- */}
-                    <div className="absolute left-[8px] top-[40px] w-[8px] h-[8px]" style={{backgroundColor: palette.pants}}></div>
-                    <div className="absolute left-[24px] top-[40px] w-[8px] h-[8px]" style={{backgroundColor: palette.pants}}></div>
-
-                    {/* Name Label */}
-                    <div className="absolute -bottom-6 w-full text-center">
-                        <span className="font-['Press_Start_2P'] text-[8px] text-stone-800 bg-white/50 px-1 rounded">
-                            {type.toUpperCase()}
+                    {/* "Click Me" Indicator */}
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-[60px] text-center animate-bounce-pixel pointer-events-none z-20">
+                        <span className="font-['Press_Start_2P'] text-[6px] text-red-600 bg-white border border-stone-800 px-1 py-0.5 whitespace-nowrap shadow-sm">
+                            CLICK ME
                         </span>
+                        {/* Little triangle pointing down */}
+                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-stone-800 mx-auto mt-[-1px]"></div>
+                    </div>
+
+                    <div className="relative inline-block animate-float" style={{ width: '40px', height: '48px' }}>
+                        {/* Face Base */}
+                        <div className="absolute left-[8px] top-[8px] w-[24px] h-[20px]" style={{backgroundColor: palette.skin}}></div>
+                        
+                        {/* Hair */}
+                        {isSpencer ? (
+                            <>
+                                <div className="absolute left-[4px] top-[4px] w-[32px] h-[8px]" style={{backgroundColor: palette.hair}}></div>
+                                <div className="absolute left-[8px] top-[12px] w-[8px] h-[4px]" style={{backgroundColor: palette.hair}}></div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="absolute left-[4px] top-[0px] w-[32px] h-[12px]" style={{backgroundColor: palette.hair}}></div>
+                                <div className="absolute left-[12px] top-[-4px] w-[16px] h-[4px]" style={{backgroundColor: palette.hair}}></div>
+                            </>
+                        )}
+
+                        {/* Eyes */}
+                        <div className="absolute left-[12px] top-[16px] w-[4px] h-[4px]" style={{backgroundColor: palette.eye}}></div>
+                        <div className="absolute left-[24px] top-[16px] w-[4px] h-[4px]" style={{backgroundColor: palette.eye}}></div>
+
+                        {/* Body */}
+                        <div className="absolute left-[8px] top-[28px] w-[24px] h-[12px]" style={{backgroundColor: palette.shirt}}></div>
+                        <div className="absolute left-[4px] top-[28px] w-[4px] h-[8px]" style={{backgroundColor: palette.shirt}}></div>
+                        <div className="absolute left-[32px] top-[28px] w-[4px] h-[8px]" style={{backgroundColor: palette.shirt}}></div>
+                        <div className="absolute left-[4px] top-[36px] w-[4px] h-[4px]" style={{backgroundColor: palette.skin}}></div>
+                        <div className="absolute left-[32px] top-[36px] w-[4px] h-[4px]" style={{backgroundColor: palette.skin}}></div>
+
+                        {/* Backpack Straps */}
+                        <div className="absolute left-[12px] top-[28px] w-[4px] h-[12px] bg-yellow-600 opacity-40"></div>
+                        <div className="absolute left-[24px] top-[28px] w-[4px] h-[12px] bg-yellow-600 opacity-40"></div>
+
+                        {/* Legs */}
+                        <div className="absolute left-[8px] top-[40px] w-[8px] h-[8px]" style={{backgroundColor: palette.pants}}></div>
+                        <div className="absolute left-[24px] top-[40px] w-[8px] h-[8px]" style={{backgroundColor: palette.pants}}></div>
+
+                        {/* Name Label */}
+                        <div className="absolute -bottom-6 w-full text-center">
+                            <span className="font-['Press_Start_2P'] text-[8px] text-stone-800 bg-white/50 px-1 rounded">
+                                {type.toUpperCase()}
+                            </span>
+                        </div>
                     </div>
                 </div>
             );
         };
 
-        // --- DATA ---
+        const SpeechBubble = ({ text, onClose, align = 'center' }) => (
+            <div 
+                className="absolute z-50 animate-in fade-in" 
+                onClick={(e) => e.stopPropagation()} 
+                style={{ 
+                    bottom: '120%', 
+                    left: align === 'left' ? '0' : align === 'right' ? 'auto' : '50%',
+                    right: align === 'right' ? '0' : 'auto',
+                    transform: align === 'center' ? 'translateX(-50%)' : 'none',
+                    width: '240px'
+                }}
+            >
+                <div className="bg-white border-4 p-3 relative shadow-xl" style={{ borderColor: COLORS.dark }}>
+                    <p className="font-['VT323'] text-xl leading-5" style={{ color: COLORS.dark }}>
+                        {text}
+                    </p>
+                    {/* Close Button X */}
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onClose(); }} 
+                        className="absolute -top-3 -right-3 bg-red-500 text-white w-6 h-6 flex items-center justify-center border-2 border-black font-bold text-xs hover:scale-110 active:scale-95 transition-transform"
+                    >
+                        X
+                    </button>
+                    {/* Triangle pointer */}
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px]" style={{ borderTopColor: COLORS.dark }}></div>
+                    <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-white"></div>
+                </div>
+            </div>
+        );
+
+        // --- SCREEN VIEWS ---
+
+        const WelcomeView = ({ onStart }) => {
+            const [speaker, setSpeaker] = useState(null);
+
+            return (
+                <div 
+                    className="h-full flex flex-col items-center justify-center p-6 text-center space-y-8 animate-in fade-in relative" 
+                    onClick={() => setSpeaker(null)}
+                >
+                    <div className="space-y-4">
+                        <h1 className="font-['Press_Start_2P'] text-2xl leading-tight" style={{ color: COLORS.dark }}>
+                            VIETNAM<br/>BROTHERS
+                        </h1>
+                        <p className="font-['VT323'] text-2xl">2026 EDITION</p>
+                    </div>
+
+                    {/* Container with 60px Gap */}
+                    <div className="flex items-end justify-center px-4 pt-10" style={{ gap: '60px' }}>
+                        
+                        {/* Spencer */}
+                        <div className="relative">
+                            {speaker === 'spencer' && (
+                                <SpeechBubble text={QUOTES.spencer} onClose={() => setSpeaker(null)} />
+                            )}
+                            <TrainerSprite type="spencer" onClick={() => setSpeaker('spencer')} />
+                        </div>
+
+                        {/* Clarke */}
+                        <div className="relative">
+                            {speaker === 'clarke' && (
+                                <SpeechBubble text={QUOTES.clarke} onClose={() => setSpeaker(null)} />
+                            )}
+                            <TrainerSprite type="clarke" onClick={() => setSpeaker('clarke')} />
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onStart(); }}
+                        className="px-8 py-4 border-4 shadow-[4px_4px_0px_0px_rgba(48,104,80,1)] active:shadow-none active:translate-y-1 transition-all mt-8"
+                        style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}
+                    >
+                        <span className="font-['Press_Start_2P'] text-sm" style={{ color: COLORS.dark }}>START GAME</span>
+                    </button>
+                </div>
+            );
+        };
+
+        const GuideView = () => {
+            const [speaker, setSpeaker] = useState(null);
+
+            return (
+                <div className="h-full overflow-y-auto pb-4 custom-scrollbar" onClick={() => setSpeaker(null)}>
+                    
+                    <div className="sticky top-0 z-40 p-4 border-b-4 shadow-md flex justify-between items-center bg-white" style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}>
+                        <h2 className="font-['Press_Start_2P'] text-xs hidden sm:block" style={{ color: COLORS.dark }}>ITINERARY</h2>
+                        
+                        {/* Interaction in Guide Header */}
+                        <div className="flex items-end w-full sm:w-auto justify-center sm:justify-end gap-12 mt-2 sm:mt-0 pt-4">
+                            <div className="relative">
+                                {speaker === 'spencer' && (
+                                    <div className="absolute right-0 top-14 z-50 w-48">
+                                         <SpeechBubble text={QUOTES.spencer} onClose={() => setSpeaker(null)} align="left" />
+                                    </div>
+                                )}
+                                <TrainerSprite type="spencer" onClick={() => setSpeaker('spencer')} />
+                            </div>
+                            <div className="relative">
+                                {speaker === 'clarke' && (
+                                    <div className="absolute right-0 top-14 z-50 w-48">
+                                        <SpeechBubble text={QUOTES.clarke} onClose={() => setSpeaker(null)} align="right" />
+                                    </div>
+                                )}
+                                <TrainerSprite type="clarke" onClick={() => setSpeaker('clarke')} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 space-y-6 pt-8">
+                        {DATA.timeline.map((item, idx) => (
+                            <div key={idx} className="relative pl-6 border-l-4" style={{ borderColor: COLORS.ui }}>
+                                <div className="absolute -left-[10px] top-0 w-4 h-4 border-2 bg-white" style={{ borderColor: COLORS.dark }}></div>
+                                <div className="mb-1 flex items-baseline gap-2">
+                                    <span className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>DAY {item.day}</span>
+                                    <span className="font-['VT323'] text-xl opacity-75">{item.date}</span>
+                                </div>
+                                <div className="p-4 border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-transform" style={{ backgroundColor: '#fff', borderColor: COLORS.ui }}>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="font-bold font-['VT323'] text-2xl uppercase leading-none" style={{ color: COLORS.dark }}>{item.title}</h3>
+                                        <a href={getMapLink(item.mapQuery)} target="_blank" rel="noreferrer" className="text-xs border px-2 py-1 font-mono flex items-center gap-1 hover:bg-stone-100" style={{ borderColor: COLORS.dark, color: COLORS.dark }}>
+                                            <MapPin size={12} />
+                                            {item.loc}
+                                        </a>
+                                    </div>
+                                    <p className="font-['VT323'] text-xl leading-6 text-stone-700">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
         const DATA = {
         intro: [
             "Welcome, Spencer & Clarke!",
@@ -292,8 +396,6 @@
         ]
         };
 
-        // --- COMPONENTS ---
-
         const Screen = ({ children }) => (
             <div className="flex flex-col h-full overflow-hidden relative" style={{ backgroundColor: COLORS.bg, color: COLORS.accent }}>
                 {children}
@@ -306,19 +408,11 @@
                 { id: 'guide', label: 'GUIDE', icon: BookOpen },
                 { id: 'bag', label: 'BAG', icon: DollarSign },
             ];
-
             return (
                 <div className="h-20 flex items-center justify-around border-t-4" style={{ backgroundColor: COLORS.bg, borderColor: COLORS.accent }}>
                     {items.map(item => (
-                        <button 
-                            key={item.id}
-                            onClick={() => setView(item.id)}
-                            className={`flex flex-col items-center justify-center w-full h-full pb-2 ${active === item.id ? 'opacity-100 translate-y-[-4px]' : 'opacity-60'}`}
-                        >
-                            <div className="p-1 mb-1 border-2 rounded" style={{ 
-                                borderColor: active === item.id ? COLORS.dark : 'transparent',
-                                backgroundColor: active === item.id ? COLORS.ui : 'transparent'
-                            }}>
+                        <button key={item.id} onClick={() => setView(item.id)} className={`flex flex-col items-center justify-center w-full h-full pb-2 ${active === item.id ? 'opacity-100 translate-y-[-4px]' : 'opacity-60'}`}>
+                            <div className="p-1 mb-1 border-2 rounded" style={{ borderColor: active === item.id ? COLORS.dark : 'transparent', backgroundColor: active === item.id ? COLORS.ui : 'transparent' }}>
                                 <item.icon size={28} color={COLORS.dark} />
                             </div>
                             <span className="font-['Press_Start_2P'] text-[10px]" style={{ color: COLORS.dark }}>{item.label}</span>
@@ -328,144 +422,61 @@
             );
         }
 
-        const WelcomeView = ({ onStart }) => (
-            <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-8 animate-in fade-in">
-                <div className="space-y-4">
-                    <h1 className="font-['Press_Start_2P'] text-2xl leading-tight" style={{ color: COLORS.dark }}>
-                        VIETNAM<br/>BROTHERS
-                    </h1>
-                    <p className="font-['VT323'] text-2xl">2026 EDITION</p>
-                </div>
-
-                <div className="flex gap-8 p-10 border-4 border-dashed rounded-xl bg-white/20" style={{ borderColor: COLORS.ui }}>
-                    <TrainerSprite type="spencer" />
-                    <TrainerSprite type="clarke" />
-                </div>
-
-                <button 
-                    onClick={onStart}
-                    className="px-8 py-4 border-4 shadow-[4px_4px_0px_0px_rgba(48,104,80,1)] active:shadow-none active:translate-y-1 transition-all"
-                    style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}
-                >
-                    <span className="font-['Press_Start_2P'] text-sm" style={{ color: COLORS.dark }}>START GAME</span>
-                </button>
-            </div>
-        );
-
         const MapView = ({ onSelect }) => (
             <div className="h-full relative overflow-hidden">
                 <div className="absolute top-4 left-4 z-10 p-2 border-2 bg-white/80" style={{ borderColor: COLORS.dark }}>
                     <h2 className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>WORLD MAP</h2>
                 </div>
-
-                {/* Pixel Map Art */}
                 <div className="w-full h-full flex items-center justify-center relative opacity-80">
                     <svg viewBox="0 0 300 400" className="w-full h-full drop-shadow-xl">
-                        {/* Vietnam Shape (Abstract) */}
                         <path d="M100,50 Q140,50 150,100 T120,200 T130,300" fill="none" stroke={COLORS.ui} strokeWidth="120" strokeLinecap="round" />
                         <path d="M100,50 Q140,50 150,100 T120,200 T130,300" fill="none" stroke={COLORS.bg} strokeWidth="110" strokeLinecap="round" />
                     </svg>
                 </div>
-
-                {/* Interactive Nodes */}
                 <div className="absolute inset-0">
-                    {/* Hanoi Node */}
-                    <button 
-                        onClick={() => onSelect('hanoi')}
-                        className="absolute top-[25%] left-[30%] flex flex-col items-center group"
-                    >
+                    <button onClick={() => onSelect('hanoi')} className="absolute top-[25%] left-[30%] flex flex-col items-center group">
                         <div className="w-4 h-4 animate-bounce" style={{ backgroundColor: COLORS.dark }}></div>
-                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}>
-                            <span className="font-['Press_Start_2P'] text-[10px]">HANOI</span>
-                        </div>
+                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}><span className="font-['Press_Start_2P'] text-[10px]">HANOI</span></div>
                     </button>
-
-                    {/* Cat Ba Node */}
-                    <button 
-                        onClick={() => onSelect('catba')}
-                        className="absolute top-[32%] right-[20%] flex flex-col items-center group"
-                    >
+                    <button onClick={() => onSelect('catba')} className="absolute top-[32%] right-[20%] flex flex-col items-center group">
                         <div className="w-4 h-4 animate-bounce delay-100" style={{ backgroundColor: COLORS.dark }}></div>
-                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}>
-                            <span className="font-['Press_Start_2P'] text-[10px]">CAT BA</span>
-                        </div>
+                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}><span className="font-['Press_Start_2P'] text-[10px]">CAT BA</span></div>
                     </button>
-
-                    {/* Ninh Binh Node */}
-                    <button 
-                        onClick={() => onSelect('ninhbinh')}
-                        className="absolute top-[45%] left-[35%] flex flex-col items-center group"
-                    >
+                    <button onClick={() => onSelect('ninhbinh')} className="absolute top-[45%] left-[35%] flex flex-col items-center group">
                         <div className="w-4 h-4 animate-bounce delay-200" style={{ backgroundColor: COLORS.dark }}></div>
-                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}>
-                            <span className="font-['Press_Start_2P'] text-[10px]">NINH BINH</span>
-                        </div>
+                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}><span className="font-['Press_Start_2P'] text-[10px]">NINH BINH</span></div>
                     </button>
                 </div>
-                
-                <div className="absolute bottom-4 w-full text-center">
-                    <span className="font-['VT323'] text-xl bg-white/50 px-2">Tap a location to travel</span>
-                </div>
+                <div className="absolute bottom-4 w-full text-center"><span className="font-['VT323'] text-xl bg-white/50 px-2">Tap a location to travel</span></div>
             </div>
         );
 
         const LocationModal = ({ locId, onClose }) => {
             const loc = DATA.locations[locId];
             if (!loc) return null;
-
             return (
                 <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in slide-in-from-bottom-10">
                     <div className="w-full max-w-sm border-4 shadow-2xl" style={{ backgroundColor: COLORS.bg, borderColor: COLORS.dark }}>
                         <div className="p-4 border-b-4 flex justify-between items-start" style={{ borderColor: COLORS.ui }}>
                             <div>
                                 <h2 className="font-['Press_Start_2P'] text-sm mb-2" style={{ color: COLORS.dark }}>{loc.name}</h2>
-                                <div className="flex flex-wrap gap-2">
-                                    {loc.badges.map(b => (
-                                        <span key={b} className="text-[10px] font-bold px-1 bg-white border border-stone-800">{b}</span>
-                                    ))}
-                                </div>
+                                <div className="flex flex-wrap gap-2">{loc.badges.map(b => (<span key={b} className="text-[10px] font-bold px-1 bg-white border border-stone-800">{b}</span>))}</div>
                             </div>
                             <button onClick={onClose}><XIcon size={24} color={COLORS.dark} /></button>
                         </div>
-                        
                         <div className="p-4 space-y-4">
                             <p className="font-['VT323'] text-xl leading-6">{loc.desc}</p>
-                            
-                            <a 
-                                href={getMapLink(loc.hotel)} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="block p-3 border-2 active:bg-white/50" 
-                                style={{ backgroundColor: '#fff', borderColor: COLORS.ui }}
-                            >
+                            <a href={getMapLink(loc.hotel)} target="_blank" rel="noreferrer" className="block p-3 border-2 active:bg-white/50" style={{ backgroundColor: '#fff', borderColor: COLORS.ui }}>
                                 <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                                        <span className="font-['Press_Start_2P'] text-[10px]">BASE CAMP</span>
-                                    </div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div><span className="font-['Press_Start_2P'] text-[10px]">BASE CAMP</span></div>
                                     <ExternalLink size={14} />
                                 </div>
                                 <p className="font-['VT323'] text-xl font-bold hover:underline decoration-emerald-800">{loc.hotel}</p>
                                 <p className="font-['VT323'] text-lg">{loc.price} (Private Room)</p>
                             </a>
-
                             <div>
                                 <span className="font-['Press_Start_2P'] text-[10px] mb-2 block">QUESTS (Click for Map):</span>
-                                <ul className="space-y-2">
-                                    {loc.tasks.map((t, i) => (
-                                        <li key={i}>
-                                            <a 
-                                                href={getMapLink(t[1])}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-2 font-['VT323'] text-xl hover:text-emerald-800 hover:underline decoration-2"
-                                            >
-                                                <ChevronRight size={16} /> 
-                                                {t[0]}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <ul className="space-y-2">{loc.tasks.map((t, i) => (<li key={i}><a href={getMapLink(t[1])} target="_blank" rel="noreferrer" className="flex items-center gap-2 font-['VT323'] text-xl hover:text-emerald-800 hover:underline decoration-2"><ChevronRight size={16} /> {t[0]}</a></li>))}</ul>
                             </div>
                         </div>
                     </div>
@@ -473,59 +484,9 @@
             );
         };
 
-        const GuideView = () => (
-            <div className="h-full overflow-y-auto pb-4 custom-scrollbar">
-                <div className="sticky top-0 z-10 p-4 border-b-4 shadow-md flex justify-between items-center" style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}>
-                    <h2 className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>ITINERARY</h2>
-                    <div className="flex -space-x-4 scale-75 origin-right">
-                        <TrainerSprite type="spencer" />
-                        <TrainerSprite type="clarke" />
-                    </div>
-                </div>
-
-                <div className="p-4 space-y-6">
-                    {DATA.timeline.map((item, idx) => (
-                        <div key={idx} className="relative pl-6 border-l-4" style={{ borderColor: COLORS.ui }}>
-                            {/* Timeline Node */}
-                            <div className="absolute -left-[10px] top-0 w-4 h-4 border-2 bg-white" style={{ borderColor: COLORS.dark }}></div>
-                            
-                            <div className="mb-1 flex items-baseline gap-2">
-                                <span className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>DAY {item.day}</span>
-                                <span className="font-['VT323'] text-xl opacity-75">{item.date}</span>
-                            </div>
-
-                            <div className="p-4 border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-transform" style={{ backgroundColor: '#fff', borderColor: COLORS.ui }}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold font-['VT323'] text-2xl uppercase leading-none" style={{ color: COLORS.dark }}>{item.title}</h3>
-                                    <a 
-                                        href={getMapLink(item.mapQuery)}
-                                        target="_blank"
-                                        rel="noreferrer" 
-                                        className="text-xs border px-2 py-1 font-mono flex items-center gap-1 hover:bg-stone-100" 
-                                        style={{ borderColor: COLORS.dark, color: COLORS.dark }}
-                                    >
-                                        <MapPin size={12} />
-                                        {item.loc}
-                                    </a>
-                                </div>
-                                <p className="font-['VT323'] text-xl leading-6 text-stone-700">
-                                    {item.desc}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                    
-                    <div className="text-center py-8 opacity-50 font-['Press_Start_2P'] text-[10px]">
-                        END OF ADVENTURE
-                    </div>
-                </div>
-            </div>
-        );
-
         const BagView = () => {
             const [usd, setUsd] = useState(1);
             const rate = 26000;
-
             return (
                 <div className="h-full overflow-y-auto p-4 custom-scrollbar space-y-6">
                     <div className="p-4 border-4 text-center space-y-2" style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}>
@@ -533,87 +494,50 @@
                         <p className="font-['VT323'] text-4xl font-bold">$1,050 USD</p>
                         <p className="font-['VT323'] text-lg">Per Person / 14 Days</p>
                     </div>
-
                     <div className="space-y-4">
                         <h3 className="font-['Press_Start_2P'] text-[10px] border-b-2 pb-2" style={{ borderColor: COLORS.dark }}>COST BREAKDOWN</h3>
-                        {[
-                            { l: "Hotels (Private)", v: "$280", d: "$20/night pp" },
-                            { l: "Food & Beer", v: "$350", d: "$25/day" },
-                            { l: "Transport", v: "$130", d: "Buses/Grab" },
-                            { l: "Activities", v: "$120", d: "Tours/Entry" },
-                            { l: "Buffer", v: "$150", d: "Emergency" }
-                        ].map((item, i) => (
+                        {[{ l: "Hotels (Private)", v: "$280", d: "$20/night pp" }, { l: "Food & Beer", v: "$350", d: "$25/day" }, { l: "Transport", v: "$130", d: "Buses/Grab" }, { l: "Activities", v: "$120", d: "Tours/Entry" }, { l: "Buffer", v: "$150", d: "Emergency" }].map((item, i) => (
                             <div key={i} className="flex justify-between items-center border-b border-dashed pb-2" style={{ borderColor: COLORS.ui }}>
-                                <div>
-                                    <p className="font-['VT323'] text-2xl font-bold">{item.l}</p>
-                                    <p className="font-['VT323'] text-lg opacity-75">{item.d}</p>
-                                </div>
+                                <div><p className="font-['VT323'] text-2xl font-bold">{item.l}</p><p className="font-['VT323'] text-lg opacity-75">{item.d}</p></div>
                                 <p className="font-['VT323'] text-2xl">{item.v}</p>
                             </div>
                         ))}
                     </div>
-
                     <div className="pt-4 mt-4 border-t-4" style={{ borderColor: COLORS.dark }}>
                         <h3 className="font-['Press_Start_2P'] text-[10px] mb-4" style={{ borderColor: COLORS.dark }}>CURRENCY CONVERTER</h3>
                         <div className="flex items-center gap-4 bg-white p-2 border-2" style={{ borderColor: COLORS.ui }}>
-                            <div className="flex-1">
-                                <label className="font-['VT323'] text-lg block opacity-50">USD ($)</label>
-                                <input 
-                                    type="number" 
-                                    value={usd} 
-                                    onChange={e => setUsd(e.target.value)}
-                                    className="w-full font-['VT323'] text-3xl outline-none bg-transparent font-bold"
-                                />
-                            </div>
+                            <div className="flex-1"><label className="font-['VT323'] text-lg block opacity-50">USD ($)</label><input type="number" value={usd} onChange={e => setUsd(e.target.value)} className="w-full font-['VT323'] text-3xl outline-none bg-transparent font-bold" /></div>
                             <div className="font-['Press_Start_2P'] text-xs">→</div>
-                            <div className="flex-1 text-right">
-                                <label className="font-['VT323'] text-lg block opacity-50">VND (₫)</label>
-                                <div className="font-['VT323'] text-3xl font-bold text-emerald-700">
-                                    {(usd * rate).toLocaleString()}
-                                </div>
-                            </div>
+                            <div className="flex-1 text-right"><label className="font-['VT323'] text-lg block opacity-50">VND (₫)</label><div className="font-['VT323'] text-3xl font-bold text-emerald-700">{(usd * rate).toLocaleString()}</div></div>
                         </div>
-                        <p className="text-center font-['VT323'] text-lg mt-2 opacity-60">Rate: $1 = 26,000 VND</p>
                     </div>
                 </div>
             );
         };
 
-        // --- MAIN APP SHELL ---
-
         function App() {
-            const [view, setView] = useState('welcome'); // welcome, map, guide, bag
+            const [view, setView] = useState('welcome');
             const [modal, setModal] = useState(null);
-
             const handleStart = () => setView('map');
             const openLocation = (id) => setModal(id);
             const closeLocation = () => setModal(null);
 
             return (
                 <div className="min-h-screen font-sans flex items-center justify-center bg-stone-800 p-0 sm:p-4">
-                {/* Mobile Frame Container */}
-                <div className="w-full max-w-md h-[100dvh] sm:h-[800px] shadow-2xl overflow-hidden flex flex-col relative sm:rounded-xl border-4" style={{ borderColor: COLORS.dark }}>
-                    
-                    {/* Screen Content */}
-                    <Screen>
-                        {view === 'welcome' && <WelcomeView onStart={handleStart} />}
-                        
-                        {view !== 'welcome' && (
-                            <div className="flex-1 overflow-hidden relative">
-                                {view === 'map' && <MapView onSelect={openLocation} />}
-                                {view === 'guide' && <GuideView />}
-                                {view === 'bag' && <BagView />}
-                                
-                                {/* Modal Overlay for Map */}
-                                {modal && <LocationModal locId={modal} onClose={closeLocation} />}
-                            </div>
-                        )}
-                        
-                        {/* Bottom Nav (Only visible after welcome) */}
-                        {view !== 'welcome' && <Navbar active={view} setView={setView} />}
-                    </Screen>
-
-                </div>
+                    <div className="w-full max-w-md h-[100dvh] sm:h-[800px] shadow-2xl overflow-hidden flex flex-col relative sm:rounded-xl border-4" style={{ borderColor: COLORS.dark }}>
+                        <Screen>
+                            {view === 'welcome' && <WelcomeView onStart={handleStart} />}
+                            {view !== 'welcome' && (
+                                <div className="flex-1 overflow-hidden relative">
+                                    {view === 'map' && <MapView onSelect={openLocation} />}
+                                    {view === 'guide' && <GuideView />}
+                                    {view === 'bag' && <BagView />}
+                                    {modal && <LocationModal locId={modal} onClose={closeLocation} />}
+                                </div>
+                            )}
+                            {view !== 'welcome' && <Navbar active={view} setView={setView} />}
+                        </Screen>
+                    </div>
                 </div>
             );
         }
