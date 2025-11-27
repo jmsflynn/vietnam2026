@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vietnam Brothers 2026</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #e0f8cf;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #306850;
+            border-radius: 0px;
+            border: 2px solid #e0f8cf;
+        }
+
+        /* Animation Polyfills for tailwindcss-animate classes */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInBottom {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-in { animation-duration: 0.3s; animation-fill-mode: forwards; }
+        .fade-in { animation-name: fadeIn; }
+        .slide-in-from-bottom-10 { animation-name: slideInBottom; }
+        
+        body {
+            background-color: #292524; /* Stone-800 fallback */
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS (Replacing lucide-react import) ---
+        const IconWrapper = ({ size = 24, color = "currentColor", children, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={color} 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const MapIcon = (props) => (
+            <IconWrapper {...props}>
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                <line x1="8" y1="2" x2="8" y2="18"></line>
+                <line x1="16" y1="6" x2="16" y2="22"></line>
+            </IconWrapper>
+        );
+
+        const BookOpen = (props) => (
+            <IconWrapper {...props}>
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </IconWrapper>
+        );
+
+        const DollarSign = (props) => (
+            <IconWrapper {...props}>
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </IconWrapper>
+        );
+
+        const XIcon = (props) => (
+            <IconWrapper {...props}>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </IconWrapper>
+        );
+
+        const ChevronRight = (props) => (
+            <IconWrapper {...props}>
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </IconWrapper>
+        );
+
+        const MapPin = (props) => (
+            <IconWrapper {...props}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </IconWrapper>
+        );
+
+        const ExternalLink = (props) => (
+            <IconWrapper {...props}>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+            </IconWrapper>
+        );
+
+        // --- VISUAL ASSETS ---
+
+        // The "Gameboy" Palette
+        const COLORS = {
+            bg: '#e0f8cf',       // Lightest Green (Background)
+            ui: '#86c06c',       // Light Green (UI Elements)
+            accent: '#306850',   // Dark Green (Text/Borders)
+            dark: '#071821',     // Almost Black (Headers)
+        };
+
+        // Helper: Generate Google Maps Search Link
+        const getMapLink = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+        // Pixel Art Trainers (CSS Drawings)
+        const TrainerSprite = ({ type = 'spencer' }) => {
+            const color = type === 'spencer' ? '#3b82f6' : '#ef4444'; 
+            return (
+                <div className="w-8 h-8 relative inline-block mx-1">
+                {/* Head */}
+                <div className="absolute top-0 left-2 w-4 h-3 bg-stone-800" />
+                <div className="absolute top-0 left-2 w-4 h-1" style={{backgroundColor: color}} />
+                {/* Body */}
+                <div className="absolute top-3 left-1 w-6 h-4" style={{backgroundColor: color}} />
+                {/* Backpack */}
+                <div className="absolute top-3 left-0 w-1 h-3 bg-yellow-600" /> 
+                <div className="absolute top-3 right-0 w-1 h-3 bg-yellow-600" />
+                <div className="absolute top-3 left-2 w-4 h-4 bg-stone-600 opacity-50" />
+                {/* Legs */}
+                <div className="absolute top-7 left-2 w-1 h-1 bg-stone-800" />
+                <div className="absolute top-7 left-5 w-1 h-1 bg-stone-800" />
+                </div>
+            );
+        };
+
+        // --- DATA ---
+        const DATA = {
+        intro: [
+            "Welcome, Spencer & Clarke!",
+            "Your mission: Survive Vietnam.",
+            "Budget: Frugal.",
+            "Fun Level: Maximum."
+        ],
+        locations: {
+            hanoi: {
+                name: "HANOI",
+                badges: ["PHO MASTER", "HISTORY BUFF"],
+                desc: "The chaotic capital. Watch out for motorbikes!",
+                hotel: "Hanoi Ancient Paradise Hotel",
+                price: "$20/pp",
+                // Format: [Label, Map Query]
+                tasks: [
+                    ["Eat Pho Thin", "Pho Thin 13 Lo Duc"],
+                    ["See B-52 Lake", "Huu Tiep Lake B-52"],
+                    ["Train Street Cafe", "Hanoi Train Street Cafe"]
+                ]
+            },
+            catba: {
+                name: "CAT BA",
+                badges: ["ISLANDER", "KAYAKER"],
+                desc: "Jungle island. Less crowds than Ha Long.",
+                hotel: "Dung Boutique Inn Cat Ba",
+                price: "$15/pp",
+                tasks: [
+                    ["Cannon Fort Sunset", "Cannon Fort Cat Ba"],
+                    ["Lan Ha Bay Port", "Ben Beo Harbor Cat Ba"],
+                    ["Hospital Cave", "Hospital Cave Cat Ba"]
+                ]
+            },
+            ninhbinh: {
+                name: "NINH BINH",
+                badges: ["KING KONG", "HIKER"],
+                desc: "Limestone karsts on land. Stunning.",
+                hotel: "Tam Coc Green Garden Homestay",
+                price: "$25/pp",
+                tasks: [
+                    ["Climb Mua Cave", "Mua Caves Ninh Binh"],
+                    ["Trang An Boat", "Trang An Boat Tour"],
+                    ["Eat Goat Meat", "Nha Hang Chinh Thu Ninh Binh"]
+                ]
+            }
+        },
+        timeline: [
+            { day: 1, date: "Dec 04", loc: "Hanoi", title: "The Arrival", mapQuery: "Pho 10 Ly Quoc Su", desc: "Land. Grab SIM cards. Check in. Eat Pho 10." },
+            { day: 2, date: "Dec 05", loc: "Hanoi", title: "History & Chaos", mapQuery: "Hoa Lo Prison Relic", desc: "Hoa Lo Prison. Bun Cha lunch. Train Street (3:30PM)." },
+            { day: 3, date: "Dec 06", loc: "Hanoi", title: "War Relics", mapQuery: "Huu Tiep Lake", desc: "B-52 Lake (Ngoc Ha). Mausoleum. Egg Coffee." },
+            { day: 4, date: "Dec 07", loc: "Hanoi", title: "Hidden Gems", mapQuery: "Standing Bar Hanoi", desc: "Dong Xuan Market. Craft Beer @ Standing Bar." },
+            { day: 5, date: "Dec 08", loc: "Cat Ba", title: "Island Bound", mapQuery: "Cat Ba Town", desc: "Bus+Ferry combo (4hrs). Rent scooters." },
+            { day: 6, date: "Dec 09", loc: "Cat Ba", title: "Lan Ha Bay", mapQuery: "Lan Ha Bay", desc: "Full day boat tour. Kayak caves. Monkey Island." },
+            { day: 7, date: "Dec 10", loc: "Cat Ba", title: "Jungle Trek", mapQuery: "Cat Ba National Park", desc: "National Park Hike. Hospital Cave." },
+            { day: 8, date: "Dec 11", loc: "N. Binh", title: "The Transfer", mapQuery: "Tam Coc", desc: "Bus to Tam Coc. Check into Bungalow." },
+            { day: 9, date: "Dec 12", loc: "N. Binh", title: "Dragon Mtn", mapQuery: "Mua Caves", desc: "Mua Cave (500 steps). Trang An Boat Ride." },
+            { day: 10, date: "Dec 13", loc: "N. Binh", title: "Pagodas", mapQuery: "Bich Dong Pagoda", desc: "Bich Dong Pagoda. Motorbike the backroads." },
+            { day: 11, date: "Dec 14", loc: "Hanoi", title: "Return Loop", mapQuery: "Hanoi Old Quarter", desc: "Bus back to Hanoi. Souvenir shopping." },
+            { day: 12, date: "Dec 15", loc: "Hanoi", title: "Buffer Day", mapQuery: "Perfume Pagoda", desc: "Perfume Pagoda or Chill in Cafes." },
+            { day: 13, date: "Dec 16", loc: "Hanoi", title: "The Feast", mapQuery: "Cha Ca La Vong", desc: "Cha Ca La Vong (Turmeric Fish). Last beers." },
+            { day: 14, date: "Dec 17", loc: "Home", title: "Departure", mapQuery: "Noi Bai International Airport", desc: "Fly home. Game Over." },
+        ]
+        };
+
+        // --- COMPONENTS ---
+
+        const Screen = ({ children }) => (
+            <div className="flex flex-col h-full overflow-hidden relative" style={{ backgroundColor: COLORS.bg, color: COLORS.accent }}>
+                {children}
+            </div>
+        );
+
+        const Navbar = ({ active, setView }) => {
+            const items = [
+                { id: 'map', label: 'MAP', icon: MapIcon },
+                { id: 'guide', label: 'GUIDE', icon: BookOpen },
+                { id: 'bag', label: 'BAG', icon: DollarSign },
+            ];
+
+            return (
+                <div className="h-20 flex items-center justify-around border-t-4" style={{ backgroundColor: COLORS.bg, borderColor: COLORS.accent }}>
+                    {items.map(item => (
+                        <button 
+                            key={item.id}
+                            onClick={() => setView(item.id)}
+                            className={`flex flex-col items-center justify-center w-full h-full pb-2 ${active === item.id ? 'opacity-100 translate-y-[-4px]' : 'opacity-60'}`}
+                        >
+                            <div className="p-1 mb-1 border-2 rounded" style={{ 
+                                borderColor: active === item.id ? COLORS.dark : 'transparent',
+                                backgroundColor: active === item.id ? COLORS.ui : 'transparent'
+                            }}>
+                                <item.icon size={28} color={COLORS.dark} />
+                            </div>
+                            <span className="font-['Press_Start_2P'] text-[10px]" style={{ color: COLORS.dark }}>{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
+        const WelcomeView = ({ onStart }) => (
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-8 animate-in fade-in">
+                <div className="space-y-4">
+                    <h1 className="font-['Press_Start_2P'] text-2xl leading-tight" style={{ color: COLORS.dark }}>
+                        VIETNAM<br/>BROTHERS
+                    </h1>
+                    <p className="font-['VT323'] text-2xl">CLARKE & SPENCER ADVENTURE</p>
+                </div>
+
+                <div className="flex gap-4 p-8 border-4 border-dashed rounded-xl" style={{ borderColor: COLORS.ui }}>
+                    <TrainerSprite type="spencer" />
+                    <TrainerSprite type="clarke" />
+                </div>
+
+                <button 
+                    onClick={onStart}
+                    className="px-8 py-4 border-4 shadow-[4px_4px_0px_0px_rgba(48,104,80,1)] active:shadow-none active:translate-y-1 transition-all"
+                    style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}
+                >
+                    <span className="font-['Press_Start_2P'] text-sm" style={{ color: COLORS.dark }}>START GAME</span>
+                </button>
+            </div>
+        );
+
+        const MapView = ({ onSelect }) => (
+            <div className="h-full relative overflow-hidden">
+                <div className="absolute top-4 left-4 z-10 p-2 border-2 bg-white/80" style={{ borderColor: COLORS.dark }}>
+                    <h2 className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>WORLD MAP</h2>
+                </div>
+
+                {/* Pixel Map Art */}
+                <div className="w-full h-full flex items-center justify-center relative opacity-80">
+                    <svg viewBox="0 0 300 400" className="w-full h-full drop-shadow-xl">
+                        {/* Vietnam Shape (Abstract) */}
+                        <path d="M100,50 Q140,50 150,100 T120,200 T130,300" fill="none" stroke={COLORS.ui} strokeWidth="120" strokeLinecap="round" />
+                        <path d="M100,50 Q140,50 150,100 T120,200 T130,300" fill="none" stroke={COLORS.bg} strokeWidth="110" strokeLinecap="round" />
+                    </svg>
+                </div>
+
+                {/* Interactive Nodes */}
+                <div className="absolute inset-0">
+                    {/* Hanoi Node */}
+                    <button 
+                        onClick={() => onSelect('hanoi')}
+                        className="absolute top-[25%] left-[30%] flex flex-col items-center group"
+                    >
+                        <div className="w-4 h-4 animate-bounce" style={{ backgroundColor: COLORS.dark }}></div>
+                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}>
+                            <span className="font-['Press_Start_2P'] text-[10px]">HANOI</span>
+                        </div>
+                    </button>
+
+                    {/* Cat Ba Node */}
+                    <button 
+                        onClick={() => onSelect('catba')}
+                        className="absolute top-[32%] right-[20%] flex flex-col items-center group"
+                    >
+                        <div className="w-4 h-4 animate-bounce delay-100" style={{ backgroundColor: COLORS.dark }}></div>
+                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}>
+                            <span className="font-['Press_Start_2P'] text-[10px]">CAT BA</span>
+                        </div>
+                    </button>
+
+                    {/* Ninh Binh Node */}
+                    <button 
+                        onClick={() => onSelect('ninhbinh')}
+                        className="absolute top-[45%] left-[35%] flex flex-col items-center group"
+                    >
+                        <div className="w-4 h-4 animate-bounce delay-200" style={{ backgroundColor: COLORS.dark }}></div>
+                        <div className="mt-2 px-2 py-1 border-2 bg-white" style={{ borderColor: COLORS.dark }}>
+                            <span className="font-['Press_Start_2P'] text-[10px]">NINH BINH</span>
+                        </div>
+                    </button>
+                </div>
+                
+                <div className="absolute bottom-4 w-full text-center">
+                    <span className="font-['VT323'] text-xl bg-white/50 px-2">Tap a location to travel</span>
+                </div>
+            </div>
+        );
+
+        const LocationModal = ({ locId, onClose }) => {
+            const loc = DATA.locations[locId];
+            if (!loc) return null;
+
+            return (
+                <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in slide-in-from-bottom-10">
+                    <div className="w-full max-w-sm border-4 shadow-2xl" style={{ backgroundColor: COLORS.bg, borderColor: COLORS.dark }}>
+                        <div className="p-4 border-b-4 flex justify-between items-start" style={{ borderColor: COLORS.ui }}>
+                            <div>
+                                <h2 className="font-['Press_Start_2P'] text-sm mb-2" style={{ color: COLORS.dark }}>{loc.name}</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {loc.badges.map(b => (
+                                        <span key={b} className="text-[10px] font-bold px-1 bg-white border border-stone-800">{b}</span>
+                                    ))}
+                                </div>
+                            </div>
+                            <button onClick={onClose}><XIcon size={24} color={COLORS.dark} /></button>
+                        </div>
+                        
+                        <div className="p-4 space-y-4">
+                            <p className="font-['VT323'] text-xl leading-6">{loc.desc}</p>
+                            
+                            <a 
+                                href={getMapLink(loc.hotel)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="block p-3 border-2 active:bg-white/50" 
+                                style={{ backgroundColor: '#fff', borderColor: COLORS.ui }}
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                        <span className="font-['Press_Start_2P'] text-[10px]">BASE CAMP</span>
+                                    </div>
+                                    <ExternalLink size={14} />
+                                </div>
+                                <p className="font-['VT323'] text-xl font-bold hover:underline decoration-emerald-800">{loc.hotel}</p>
+                                <p className="font-['VT323'] text-lg">{loc.price} (Private Room)</p>
+                            </a>
+
+                            <div>
+                                <span className="font-['Press_Start_2P'] text-[10px] mb-2 block">QUESTS (Click for Map):</span>
+                                <ul className="space-y-2">
+                                    {loc.tasks.map((t, i) => (
+                                        <li key={i}>
+                                            <a 
+                                                href={getMapLink(t[1])}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex items-center gap-2 font-['VT323'] text-xl hover:text-emerald-800 hover:underline decoration-2"
+                                            >
+                                                <ChevronRight size={16} /> 
+                                                {t[0]}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const GuideView = () => (
+            <div className="h-full overflow-y-auto pb-4 custom-scrollbar">
+                <div className="sticky top-0 z-10 p-4 border-b-4 shadow-md flex justify-between items-center" style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}>
+                    <h2 className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>ITINERARY</h2>
+                    <div className="flex">
+                        <TrainerSprite type="spencer" />
+                        <TrainerSprite type="clarke" />
+                    </div>
+                </div>
+
+                <div className="p-4 space-y-6">
+                    {DATA.timeline.map((item, idx) => (
+                        <div key={idx} className="relative pl-6 border-l-4" style={{ borderColor: COLORS.ui }}>
+                            {/* Timeline Node */}
+                            <div className="absolute -left-[10px] top-0 w-4 h-4 border-2 bg-white" style={{ borderColor: COLORS.dark }}></div>
+                            
+                            <div className="mb-1 flex items-baseline gap-2">
+                                <span className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>DAY {item.day}</span>
+                                <span className="font-['VT323'] text-xl opacity-75">{item.date}</span>
+                            </div>
+
+                            <div className="p-4 border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-transform" style={{ backgroundColor: '#fff', borderColor: COLORS.ui }}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="font-bold font-['VT323'] text-2xl uppercase leading-none" style={{ color: COLORS.dark }}>{item.title}</h3>
+                                    <a 
+                                        href={getMapLink(item.mapQuery)}
+                                        target="_blank"
+                                        rel="noreferrer" 
+                                        className="text-xs border px-2 py-1 font-mono flex items-center gap-1 hover:bg-stone-100" 
+                                        style={{ borderColor: COLORS.dark, color: COLORS.dark }}
+                                    >
+                                        <MapPin size={12} />
+                                        {item.loc}
+                                    </a>
+                                </div>
+                                <p className="font-['VT323'] text-xl leading-6 text-stone-700">
+                                    {item.desc}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    <div className="text-center py-8 opacity-50 font-['Press_Start_2P'] text-[10px]">
+                        END OF ADVENTURE
+                    </div>
+                </div>
+            </div>
+        );
+
+        const BagView = () => {
+            const [usd, setUsd] = useState(1);
+            const rate = 26000;
+
+            return (
+                <div className="h-full overflow-y-auto p-4 custom-scrollbar space-y-6">
+                    <div className="p-4 border-4 text-center space-y-2" style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}>
+                        <h2 className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>TOTAL BUDGET</h2>
+                        <p className="font-['VT323'] text-4xl font-bold">$1,050 USD</p>
+                        <p className="font-['VT323'] text-lg">Per Person / 14 Days</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="font-['Press_Start_2P'] text-[10px] border-b-2 pb-2" style={{ borderColor: COLORS.dark }}>COST BREAKDOWN</h3>
+                        {[
+                            { l: "Hotels (Private)", v: "$280", d: "$20/night pp" },
+                            { l: "Food & Beer", v: "$350", d: "$25/day" },
+                            { l: "Transport", v: "$130", d: "Buses/Grab" },
+                            { l: "Activities", v: "$120", d: "Tours/Entry" },
+                            { l: "Buffer", v: "$150", d: "Emergency" }
+                        ].map((item, i) => (
+                            <div key={i} className="flex justify-between items-center border-b border-dashed pb-2" style={{ borderColor: COLORS.ui }}>
+                                <div>
+                                    <p className="font-['VT323'] text-2xl font-bold">{item.l}</p>
+                                    <p className="font-['VT323'] text-lg opacity-75">{item.d}</p>
+                                </div>
+                                <p className="font-['VT323'] text-2xl">{item.v}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t-4" style={{ borderColor: COLORS.dark }}>
+                        <h3 className="font-['Press_Start_2P'] text-[10px] mb-4" style={{ borderColor: COLORS.dark }}>CURRENCY CONVERTER</h3>
+                        <div className="flex items-center gap-4 bg-white p-2 border-2" style={{ borderColor: COLORS.ui }}>
+                            <div className="flex-1">
+                                <label className="font-['VT323'] text-lg block opacity-50">USD ($)</label>
+                                <input 
+                                    type="number" 
+                                    value={usd} 
+                                    onChange={e => setUsd(e.target.value)}
+                                    className="w-full font-['VT323'] text-3xl outline-none bg-transparent font-bold"
+                                />
+                            </div>
+                            <div className="font-['Press_Start_2P'] text-xs">→</div>
+                            <div className="flex-1 text-right">
+                                <label className="font-['VT323'] text-lg block opacity-50">VND (₫)</label>
+                                <div className="font-['VT323'] text-3xl font-bold text-emerald-700">
+                                    {(usd * rate).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                        <p className="text-center font-['VT323'] text-lg mt-2 opacity-60">Rate: $1 = 26,000 VND</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP SHELL ---
+
+        function App() {
+            const [view, setView] = useState('welcome'); // welcome, map, guide, bag
+            const [modal, setModal] = useState(null);
+
+            const handleStart = () => setView('map');
+            const openLocation = (id) => setModal(id);
+            const closeLocation = () => setModal(null);
+
+            return (
+                <div className="min-h-screen font-sans flex items-center justify-center bg-stone-800 p-0 sm:p-4">
+                {/* Mobile Frame Container */}
+                <div className="w-full max-w-md h-[100dvh] sm:h-[800px] shadow-2xl overflow-hidden flex flex-col relative sm:rounded-xl border-4" style={{ borderColor: COLORS.dark }}>
+                    
+                    {/* Screen Content */}
+                    <Screen>
+                        {view === 'welcome' && <WelcomeView onStart={handleStart} />}
+                        
+                        {view !== 'welcome' && (
+                            <div className="flex-1 overflow-hidden relative">
+                                {view === 'map' && <MapView onSelect={openLocation} />}
+                                {view === 'guide' && <GuideView />}
+                                {view === 'bag' && <BagView />}
+                                
+                                {/* Modal Overlay for Map */}
+                                {modal && <LocationModal locId={modal} onClose={closeLocation} />}
+                            </div>
+                        )}
+                        
+                        {/* Bottom Nav (Only visible after welcome) */}
+                        {view !== 'welcome' && <Navbar active={view} setView={setView} />}
+                    </Screen>
+
+                </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
