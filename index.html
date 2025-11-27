@@ -43,12 +43,23 @@
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
         }
+        @keyframes bouncePixel {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
         .animate-in { animation-duration: 0.3s; animation-fill-mode: forwards; }
         .fade-in { animation-name: fadeIn; }
         .slide-in-from-bottom-10 { animation-name: slideInBottom; }
+        .animate-bounce-pixel { animation: bouncePixel 1s infinite steps(2); }
         
         body {
             background-color: #292524; /* Stone-800 fallback */
+        }
+        
+        /* Ensure crisp pixel edges */
+        .pixelated {
+            image-rendering: pixelated;
         }
     </style>
 </head>
@@ -139,23 +150,79 @@
         // Helper: Generate Google Maps Search Link
         const getMapLink = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
-        // Pixel Art Trainers (CSS Drawings)
+        // --- CUSTOM PIXEL ART TRAINERS ---
         const TrainerSprite = ({ type = 'spencer' }) => {
-            const color = type === 'spencer' ? '#3b82f6' : '#ef4444'; 
+            const isSpencer = type === 'spencer';
+            
+            // Custom Palettes based on provided photos
+            const palette = {
+                skin: '#F5D0A9',
+                eye: '#111827',
+                // Spencer: Red shirt, Dark Brown Hair
+                // Clarke: Navy shirt, Blonde/Light Brown Hair
+                hair: isSpencer ? '#4A3728' : '#CCA352', 
+                shirt: isSpencer ? '#DC2626' : '#172554',
+                pants: isSpencer ? '#374151' : '#A8A29E', // Grey jeans vs Khakis
+                shoes: '#1F2937'
+            };
+
+            // Scaling factor for the pixels
+            const pixelSize = '4px';
+
             return (
-                <div className="w-8 h-8 relative inline-block mx-1">
-                {/* Head */}
-                <div className="absolute top-0 left-2 w-4 h-3 bg-stone-800" />
-                <div className="absolute top-0 left-2 w-4 h-1" style={{backgroundColor: color}} />
-                {/* Body */}
-                <div className="absolute top-3 left-1 w-6 h-4" style={{backgroundColor: color}} />
-                {/* Backpack */}
-                <div className="absolute top-3 left-0 w-1 h-3 bg-yellow-600" /> 
-                <div className="absolute top-3 right-0 w-1 h-3 bg-yellow-600" />
-                <div className="absolute top-3 left-2 w-4 h-4 bg-stone-600 opacity-50" />
-                {/* Legs */}
-                <div className="absolute top-7 left-2 w-1 h-1 bg-stone-800" />
-                <div className="absolute top-7 left-5 w-1 h-1 bg-stone-800" />
+                <div className="relative inline-block mx-2 animate-bounce-pixel" style={{ width: '40px', height: '48px' }}>
+                    
+                    {/* --- HEAD --- */}
+                    
+                    {/* Face Base */}
+                    <div className="absolute left-[8px] top-[8px] w-[24px] h-[20px]" style={{backgroundColor: palette.skin}}></div>
+                    
+                    {/* Hair (Distinct Styles) */}
+                    {isSpencer ? (
+                        <>
+                            {/* Spencer: Textured/Bangs */}
+                            <div className="absolute left-[4px] top-[4px] w-[32px] h-[8px]" style={{backgroundColor: palette.hair}}></div>
+                            <div className="absolute left-[8px] top-[12px] w-[8px] h-[4px]" style={{backgroundColor: palette.hair}}></div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Clarke: Spiky/Upwards */}
+                            <div className="absolute left-[4px] top-[0px] w-[32px] h-[12px]" style={{backgroundColor: palette.hair}}></div>
+                            <div className="absolute left-[12px] top-[-4px] w-[16px] h-[4px]" style={{backgroundColor: palette.hair}}></div>
+                        </>
+                    )}
+
+                    {/* Eyes */}
+                    <div className="absolute left-[12px] top-[16px] w-[4px] h-[4px]" style={{backgroundColor: palette.eye}}></div>
+                    <div className="absolute left-[24px] top-[16px] w-[4px] h-[4px]" style={{backgroundColor: palette.eye}}></div>
+
+                    {/* --- BODY --- */}
+                    
+                    {/* Shirt */}
+                    <div className="absolute left-[8px] top-[28px] w-[24px] h-[12px]" style={{backgroundColor: palette.shirt}}></div>
+                    
+                    {/* Sleeves */}
+                    <div className="absolute left-[4px] top-[28px] w-[4px] h-[8px]" style={{backgroundColor: palette.shirt}}></div>
+                    <div className="absolute left-[32px] top-[28px] w-[4px] h-[8px]" style={{backgroundColor: palette.shirt}}></div>
+
+                    {/* Hands */}
+                    <div className="absolute left-[4px] top-[36px] w-[4px] h-[4px]" style={{backgroundColor: palette.skin}}></div>
+                    <div className="absolute left-[32px] top-[36px] w-[4px] h-[4px]" style={{backgroundColor: palette.skin}}></div>
+
+                    {/* Backpack Straps (Subtle yellow) */}
+                    <div className="absolute left-[12px] top-[28px] w-[4px] h-[12px] bg-yellow-600 opacity-40"></div>
+                    <div className="absolute left-[24px] top-[28px] w-[4px] h-[12px] bg-yellow-600 opacity-40"></div>
+
+                    {/* --- LEGS --- */}
+                    <div className="absolute left-[8px] top-[40px] w-[8px] h-[8px]" style={{backgroundColor: palette.pants}}></div>
+                    <div className="absolute left-[24px] top-[40px] w-[8px] h-[8px]" style={{backgroundColor: palette.pants}}></div>
+
+                    {/* Name Label */}
+                    <div className="absolute -bottom-6 w-full text-center">
+                        <span className="font-['Press_Start_2P'] text-[8px] text-stone-800 bg-white/50 px-1 rounded">
+                            {type.toUpperCase()}
+                        </span>
+                    </div>
                 </div>
             );
         };
@@ -267,10 +334,10 @@
                     <h1 className="font-['Press_Start_2P'] text-2xl leading-tight" style={{ color: COLORS.dark }}>
                         VIETNAM<br/>BROTHERS
                     </h1>
-                    <p className="font-['VT323'] text-2xl">CLARKE & SPENCER ADVENTURE</p>
+                    <p className="font-['VT323'] text-2xl">2026 EDITION</p>
                 </div>
 
-                <div className="flex gap-4 p-8 border-4 border-dashed rounded-xl" style={{ borderColor: COLORS.ui }}>
+                <div className="flex gap-8 p-10 border-4 border-dashed rounded-xl bg-white/20" style={{ borderColor: COLORS.ui }}>
                     <TrainerSprite type="spencer" />
                     <TrainerSprite type="clarke" />
                 </div>
@@ -410,7 +477,7 @@
             <div className="h-full overflow-y-auto pb-4 custom-scrollbar">
                 <div className="sticky top-0 z-10 p-4 border-b-4 shadow-md flex justify-between items-center" style={{ backgroundColor: COLORS.ui, borderColor: COLORS.dark }}>
                     <h2 className="font-['Press_Start_2P'] text-xs" style={{ color: COLORS.dark }}>ITINERARY</h2>
-                    <div className="flex">
+                    <div className="flex -space-x-4 scale-75 origin-right">
                         <TrainerSprite type="spencer" />
                         <TrainerSprite type="clarke" />
                     </div>
